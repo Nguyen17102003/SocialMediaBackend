@@ -1,26 +1,25 @@
-# Base image với JDK 21
-FROM openjdk:17-jdk-slim
+# Sử dụng image có sẵn JDK 21 và Maven cài sẵn
+FROM maven:3.9.6-eclipse-temurin-21 AS build
 
-# Cài đặt Maven
-RUN apt-get update && apt-get install -y maven
+# Thiết lập thư mục làm việc
+WORKDIR /app
 
-# Xác định JAVA_HOME (đúng với image openjdk:21-jdk-slim)
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-ENV PATH="$JAVA_HOME/bin:$PATH"
+# Copy toàn bộ project
+COPY . .
+
+# Build project bằng Maven
+RUN mvn clean package -DskipTests
+
+# Giai đoạn chạy (chỉ copy file jar để giảm dung lượng)
+FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
-# Copy toàn bộ source code
-COPY . .
+# Copy file jar từ giai đoạn build
+COPY --from=build /app/target/*.jar app.jar
 
-# Đảm bảo mvnw có quyền thực thi
-RUN chmod +x mvnw || true
-
-# Dùng Maven có sẵn trong hệ thống để build
-RUN mvn clean package -DskipTests
-
-# Mở cổng (tùy app)
+# Mở cổng ứng dụng
 EXPOSE 8080
 
 # Chạy ứng dụng
-CMD ["java", "-jar", "target/*.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
