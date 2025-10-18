@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: SocialMediaBackend
+    env: docker
+    plan: free
+    region: singapore
+    buildCommand: |
+      export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
+      ./mvnw clean package -DskipTests
+    startCommand: java -jar target/*.jar
